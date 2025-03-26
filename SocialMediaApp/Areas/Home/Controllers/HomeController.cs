@@ -2,8 +2,9 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using SocialMediaApp.Models;
 
-namespace SocialMediaApp.Controllers
+namespace SocialMediaApp.Areas.Home.Controllers
 {
+    [Area("Home")]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;

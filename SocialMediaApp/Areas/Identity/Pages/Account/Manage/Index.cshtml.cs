@@ -41,6 +41,19 @@ namespace SocialMediaApp.Areas.Identity.Pages.Account.Manage
             [Display(Name = "Phone number")]
             public string PhoneNumber { get; set; }
 
+            [Display(Name = "Name")]
+            public string Name { get; set; }
+
+            [Display(Name = "Bio")]
+            public string Bio { get; set; }
+
+            [DataType(DataType.Date)]
+            [Display(Name = "Date of Birth")]
+            public DateTime? DateOfBirth { get; set; }
+
+            [Display(Name = "Gender")]
+            public string Gender { get; set; }
+
             [Display(Name = "Profile Picture")]
             public IFormFile ProfilePicture { get; set; } // ✅ For upload
         }
@@ -55,7 +68,11 @@ namespace SocialMediaApp.Areas.Identity.Pages.Account.Manage
 
             Input = new InputModel
             {
-                PhoneNumber = phoneNumber
+                PhoneNumber = phoneNumber,
+                Name = user.Name,
+                Bio = user.Bio,
+                Gender = user.Gender,
+                DateOfBirth = user.DateOfBirth
             };
         }
 
@@ -131,6 +148,10 @@ namespace SocialMediaApp.Areas.Identity.Pages.Account.Manage
 
                 // Save URL in DB
                 user.GetType().GetProperty("ProfilePictureUrl")?.SetValue(user, $"/images/profile/{uniqueFileName}");
+                user.Name = Input.Name;
+                user.Bio = Input.Bio;
+                user.Gender = Input.Gender;
+                user.DateOfBirth = Input.DateOfBirth;
                 await _userManager.UpdateAsync(user);
             }
 

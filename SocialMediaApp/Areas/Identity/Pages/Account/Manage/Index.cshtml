@@ -17,10 +17,38 @@
                 <label asp-for="Username" class="form-label"></label>
             </div>
 
+            
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Name" class="form-control" placeholder="Your name" />
+                <label asp-for="Input.Name"></label>
+                <span asp-validation-for="Input.Name" class="text-danger"></span>
+            </div>
             <div class="form-floating mb-3">
                 <input asp-for="Input.PhoneNumber" class="form-control" />
                 <label asp-for="Input.PhoneNumber" class="form-label"></label>
                 <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <textarea asp-for="Input.Bio" class="form-control" placeholder="Tell us about yourself..."></textarea>
+                <label asp-for="Input.Bio"></label>
+                <span asp-validation-for="Input.Bio" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <select asp-for="Input.Gender" class="form-control">
+                    <option value="">Select Gender</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                </select>
+                <label asp-for="Input.Gender"></label>
+                <span asp-validation-for="Input.Gender" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.DateOfBirth" class="form-control" type="date" />
+                <label asp-for="Input.DateOfBirth"></label>
+                <span asp-validation-for="Input.DateOfBirth" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
@@ -46,6 +74,7 @@
         <img src="@(!string.IsNullOrEmpty(Model.ProfilePictureUrl) ? Model.ProfilePictureUrl : "/images/profile/default.png")"
              class="rounded-circle shadow"
              style="width: 150px; height: 150px; object-fit: cover;" />
+        
     </div>
 </div>
 

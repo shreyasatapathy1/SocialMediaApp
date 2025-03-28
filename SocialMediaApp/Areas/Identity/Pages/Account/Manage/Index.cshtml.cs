@@ -76,7 +76,7 @@ namespace SocialMediaApp.Areas.Identity.Pages.Account.Manage
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Unable to load user.");
+                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
             if (!ModelState.IsValid)
@@ -88,29 +88,49 @@ namespace SocialMediaApp.Areas.Identity.Pages.Account.Manage
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
             if (Input.PhoneNumber != phoneNumber)
             {
-                var result = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
-                if (!result.Succeeded)
+                var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
+                if (!setPhoneResult.Succeeded)
                 {
-                    StatusMessage = "Error setting phone number.";
+                    StatusMessage = "Unexpected error when trying to set phone number.";
                     return RedirectToPage();
                 }
             }
 
-            // ✅ Handle Profile Picture Upload
-            if (Input.ProfilePicture != null && Input.ProfilePicture.Length > 0)
+            // ✅ Profile Picture Validation
+            if (Input.ProfilePicture != null)
             {
-                var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
-                Directory.CreateDirectory(uploadsFolder); // Ensure directory exists
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+                var extension = Path.GetExtension(Input.ProfilePicture.FileName).ToLowerInvariant();
+                var fileSize = Input.ProfilePicture.Length;
 
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(Input.ProfilePicture.FileName);
-                var filePath = Path.Combine(uploadsFolder, fileName);
+                if (!allowedExtensions.Contains(extension))
+                {
+                    ModelState.AddModelError("Input.ProfilePicture", "Only JPG, PNG, JPEG, and GIF files are allowed.");
+                    await LoadAsync(user);
+                    return Page();
+                }
 
+                if (fileSize > 2 * 1024 * 1024) // 2MB max
+                {
+                    ModelState.AddModelError("Input.ProfilePicture", "File size must not exceed 2 MB.");
+                    await LoadAsync(user);
+                    return Page();
+                }
+
+                // Save the file to wwwroot/images/profile/
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "profile");
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
+
+                var uniqueFileName = $"{Guid.NewGuid()}{extension}";
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await Input.ProfilePicture.CopyToAsync(stream);
                 }
 
-                user.ProfilePictureUrl = "/images/" + fileName; // ✅ Save relative URL
+                // Save URL in DB
+                user.GetType().GetProperty("ProfilePictureUrl")?.SetValue(user, $"/images/profile/{uniqueFileName}");
                 await _userManager.UpdateAsync(user);
             }
 
@@ -118,5 +138,33 @@ namespace SocialMediaApp.Areas.Identity.Pages.Account.Manage
             StatusMessage = "Your profile has been updated";
             return RedirectToPage();
         }
+
+
+        public async Task<IActionResult> OnPostDeleteProfilePictureAsync()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+            }
+
+            var fileName = Path.GetFileName(user.ProfilePictureUrl ?? "");
+            if (!string.IsNullOrEmpty(fileName))
+            {
+                var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "images", "profile", fileName);
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+            }
+
+            user.ProfilePictureUrl = null;
+            await _userManager.UpdateAsync(user);
+            await _signInManager.RefreshSignInAsync(user);
+            StatusMessage = "Profile picture removed.";
+            return RedirectToPage();
+        }
+
     }
+
 }

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using SocialMediaApp.Data;
+using SocialMediaApp.Hubs;
 using SocialMediaApp.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +18,13 @@ builder.Services.AddDefaultIdentity<ApplicationUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 //builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
+
+builder.Services.AddSignalR();
+builder.Services.AddScoped<ChatHub>();
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+
+
+
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -53,5 +62,5 @@ app.MapControllerRoute(
     pattern: "{area=Home}/{controller=Home}/{action=Index}/{id?}");
 
 app.MapRazorPages();
-
+app.MapHub<ChatHub>("/chathub");
 app.Run();

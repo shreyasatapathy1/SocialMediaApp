@@ -28,6 +28,12 @@
                             <a class="nav-link text-dark" asp-area="User" asp-controller="Friend" asp-action="MyFriends">My Friends</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="User" asp-controller="Chat" asp-action="ChatList">
+                                <i class="bi bi-chat-dots"></i> Chat
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="User" asp-controller="Friend" asp-action="Search">
                                 <i class="bi bi-search"></i> Search
                             </a>
@@ -54,5 +60,7 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
 </body>
 </html>

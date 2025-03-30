@@ -166,28 +166,36 @@ namespace SocialMediaApp.Areas.User.Controllers
         {
             var currentUserId = _userManager.GetUserId(User);
 
+            // Get accepted friends
             var friends = await _context.FriendRequests
+                .Where(r => (r.SenderId == currentUserId || r.ReceiverId == currentUserId)
+                         && r.Status == FriendRequestStatus.Accepted && !r.IsBlocked)
                 .Include(r => r.Sender)
                 .Include(r => r.Receiver)
-                .Where(r =>
-                    r.Status == FriendRequestStatus.Accepted &&
-                    (r.SenderId == currentUserId || r.ReceiverId == currentUserId))
                 .ToListAsync();
 
-            var myFriends = friends.Select(r =>
+            var friendUsers = friends.Select(r =>
             {
-                var friend = r.SenderId == currentUserId ? r.Receiver : r.Sender;
+                var user = r.SenderId == currentUserId ? r.Receiver : r.Sender;
                 return new UserSearchViewModel
                 {
-                    UserId = friend.Id,
-                    UserName = friend.Name ?? friend.UserName,
-                    Email = friend.Email,
-                    ProfilePictureUrl = friend.ProfilePictureUrl
+                    UserId = user.Id,
+                    UserName = user.Name ?? user.UserName,
+                    Email = user.Email
                 };
             }).ToList();
 
-            return View(myFriends);
+            // Get received requests
+            var requests = await _context.FriendRequests
+                .Where(r => r.ReceiverId == currentUserId && r.Status == FriendRequestStatus.Pending)
+                .Include(r => r.Sender)
+                .ToListAsync();
+
+            ViewBag.ReceivedRequests = requests;
+
+            return View(friendUsers);
         }
+
 
     }
 }

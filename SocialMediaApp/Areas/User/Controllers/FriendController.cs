@@ -38,9 +38,11 @@ namespace SocialMediaApp.Areas.User.Controllers
                 .ToListAsync();
 
             var requests = await _context.FriendRequests
-                .Where(r =>
-                    (r.SenderId == currentUserId || r.ReceiverId == currentUserId))
-                .ToListAsync();
+    .Where(r =>
+        (r.SenderId == currentUserId || r.ReceiverId == currentUserId) &&
+         r.Status != FriendRequestStatus.Declined) // ✅ Add this filter
+    .ToListAsync();
+
 
             var result = users.Select(user =>
             {
@@ -71,9 +73,31 @@ namespace SocialMediaApp.Areas.User.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SendRequest(string receiverId)
         {
+            if (string.IsNullOrEmpty(receiverId))
+                return BadRequest();
+
             var senderId = _userManager.GetUserId(User);
 
-            var request = new FriendRequest
+            var existingRequest = await _context.FriendRequests
+                .FirstOrDefaultAsync(r =>
+                    (r.SenderId == senderId && r.ReceiverId == receiverId) ||
+                    (r.SenderId == receiverId && r.ReceiverId == senderId));
+
+            if (existingRequest != null)
+            {
+                if (existingRequest.Status == FriendRequestStatus.Declined)
+                {
+                    _context.FriendRequests.Remove(existingRequest);
+                    await _context.SaveChangesAsync(); // 💥 you missed this save
+                }
+                else
+                {
+                    return Ok(); // Don't re-send if not Declined
+                }
+            }
+
+
+            var newRequest = new FriendRequest
             {
                 SenderId = senderId,
                 ReceiverId = receiverId,
@@ -81,11 +105,12 @@ namespace SocialMediaApp.Areas.User.Controllers
                 RequestedAt = DateTime.Now
             };
 
-            _context.FriendRequests.Add(request);
+            _context.FriendRequests.Add(newRequest);
             await _context.SaveChangesAsync();
 
             return Ok();
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]

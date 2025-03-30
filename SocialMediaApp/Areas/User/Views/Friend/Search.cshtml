@@ -1,0 +1,185 @@
+﻿@model List<SocialMediaApp.Models.ViewModel.UserSearchViewModel>
+@using SocialMediaApp.Models
+@{
+    ViewData["Title"] = "Find Friends";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Find Friends</h2>
+
+    <form asp-action="Search" method="get" class="input-group mb-4 justify-content-center">
+        <input type="text" name="query" class="form-control w-50" placeholder="Search by name or email..." />
+        <button type="submit" class="btn btn-primary ms-2">Search</button>
+    </form>
+
+    <form id="antiForgeryForm">@Html.AntiForgeryToken()</form>
+
+    @if (Model != null && Model.Any())
+    {
+        foreach (var user in Model)
+        {
+            <div class="card mb-3 shadow-sm user-card" data-user-id="@user.UserId">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <img src="@(user.ProfilePictureUrl ?? "/images/default-avatar.png")" class="rounded-circle me-3" style="width: 48px; height: 48px; object-fit: cover;" />
+                        <div>
+                            <h5 class="card-title mb-0">@user.UserName</h5>
+                            <small class="text-muted">@user.Email</small>
+                        </div>
+                    </div>
+
+                    <div>
+                        @if (user.Status == null)
+                        {
+                            <button class="btn btn-outline-success send-request-btn" data-user-id="@user.UserId">Send Request</button>
+                        }
+                        else if (user.Status == FriendRequestStatus.Pending && user.IsSender)
+                        {
+                            <span class="text-muted">Request Sent</span>
+                        }
+                        else if (user.Status == FriendRequestStatus.Pending && !user.IsSender)
+                        {
+                            <button class="btn btn-success accept-request-btn me-2" data-request-id="@user.RequestId">Accept</button>
+                            <button class="btn btn-outline-danger decline-request-btn" data-request-id="@user.RequestId">Decline</button>
+                        }
+                        else if (user.Status == FriendRequestStatus.Accepted)
+                        {
+                            <button class="btn btn-danger unfriend-btn me-2" data-user-id="@user.UserId">Unfriend</button>
+                            <button class="btn btn-outline-dark block-btn" data-user-id="@user.UserId">Block</button>
+                        }
+                        else if (user.Status == FriendRequestStatus.Blocked)
+                        {
+                            <span class="text-danger">Blocked</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <p class="text-center text-muted">No users found.</p>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            function showToast(message) {
+                alert(message); // Or use a toast library later
+            }
+
+            $(".send-request-btn").click(function (e) {
+                e.preventDefault();
+                var button = $(this);
+                var receiverId = button.data("user-id");
+
+                $.ajax({
+                    url: '/User/Friend/SendRequest',
+                    type: 'POST',
+                    data: {
+                        receiverId: receiverId,
+                        __RequestVerificationToken: token
+                    },
+                    success: function () {
+                        button.replaceWith('<span class="text-muted">Request Sent</span>');
+                    },
+                    error: function () {
+                        showToast("Error sending request.");
+                    }
+                });
+            });
+
+            $(".accept-request-btn").click(function (e) {
+                e.preventDefault();
+                var button = $(this);
+                var requestId = button.data("request-id");
+
+                $.ajax({
+                    url: '/User/Friend/AcceptRequest',
+                    type: 'POST',
+                    data: {
+                        id: requestId,
+                        __RequestVerificationToken: token
+                    },
+                    success: function () {
+                        button.closest(".user-card").find(".accept-request-btn, .decline-request-btn").remove();
+                        button.closest(".user-card").find("div:last").append('<button class="btn btn-danger unfriend-btn me-2" data-user-id="' + requestId + '">Unfriend</button><button class="btn btn-outline-dark block-btn" data-user-id="' + requestId + '">Block</button>');
+                    },
+                    error: function () {
+                        showToast("Error accepting request.");
+                    }
+                });
+            });
+
+            $(".decline-request-btn").click(function (e) {
+                e.preventDefault();
+                var button = $(this);
+                var requestId = button.data("request-id");
+
+                $.ajax({
+                    url: '/User/Friend/DeclineRequest',
+                    type: 'POST',
+                    data: {
+                        id: requestId,
+                        __RequestVerificationToken: token
+                    },
+                    success: function () {
+                        button.closest(".user-card").fadeOut();
+                    },
+                    error: function () {
+                        showToast("Error declining request.");
+                    }
+                });
+            });
+
+            $(".unfriend-btn").click(function (e) {
+                e.preventDefault();
+                var button = $(this);
+                var userId = button.data("user-id");
+
+                $.ajax({
+                    url: '/User/Friend/Unfriend',
+                    type: 'POST',
+                    data: {
+                        friendId: userId,
+                        __RequestVerificationToken: token
+                    },
+                    success: function () {
+                        button.closest(".user-card").find(".unfriend-btn, .block-btn").remove();
+                        button.closest(".user-card").find("div:last").append('<button class="btn btn-outline-success send-request-btn" data-user-id="' + userId + '">Send Request</button>');
+                    },
+                    error: function () {
+                        showToast("Error unfriending.");
+                    }
+                });
+            });
+
+            $(".block-btn").click(function (e) {
+                e.preventDefault();
+                var button = $(this);
+                var userId = button.data("user-id");
+
+                $.ajax({
+                    url: '/User/Friend/BlockUser',
+                    type: 'POST',
+                    data: {
+                        userIdToBlock: userId,
+                        __RequestVerificationToken: token
+                    },
+                    success: function () {
+                        button.closest(".user-card").find(".unfriend-btn, .block-btn").remove();
+                        button.closest(".user-card").find("div:last").append('<span class="text-danger">Blocked</span>');
+                    },
+                    error: function () {
+                        showToast("Error blocking user.");
+                    }
+                });
+            });
+        });
+    </script>
+}

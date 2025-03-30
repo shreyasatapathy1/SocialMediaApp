@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using System.Collections.Generic;
 
 namespace SocialMediaApp.Models
 {
@@ -9,5 +10,7 @@ namespace SocialMediaApp.Models
         public string? Bio { get; set; }
         public DateTime? DateOfBirth { get; set; }
         public string? Gender { get; set; }
+
+       
     }
 }

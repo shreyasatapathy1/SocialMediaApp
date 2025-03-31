@@ -22,10 +22,10 @@ namespace SocialMediaApp.Hubs
 
         public async Task SendMessage(string senderId, string receiverId, string content)
         {
-            Console.WriteLine("🔔 SendMessage Invoked");
-            Console.WriteLine($"📨 SenderId: {senderId}");
-            Console.WriteLine($"📨 ReceiverId: {receiverId}");
-            Console.WriteLine($"📨 Content: {content}");
+            Console.WriteLine(" SendMessage Invoked");
+            Console.WriteLine($" SenderId: {senderId}");
+            Console.WriteLine($" ReceiverId: {receiverId}");
+            Console.WriteLine($" Content: {content}");
 
             try
             {
@@ -34,7 +34,7 @@ namespace SocialMediaApp.Hubs
 
                 if (!senderExists || !receiverExists)
                 {
-                    Console.WriteLine($"❌ Invalid Sender or Receiver. SenderExists: {senderExists}, ReceiverExists: {receiverExists}");
+                    Console.WriteLine($" Invalid Sender or Receiver. SenderExists: {senderExists}, ReceiverExists: {receiverExists}");
                     return;
                 }
 
@@ -56,9 +56,9 @@ namespace SocialMediaApp.Hubs
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Exception in SendMessage: {ex.Message}");
+                Console.WriteLine($" Exception in SendMessage: {ex.Message}");
                 if (ex.InnerException != null)
-                    Console.WriteLine($"🔎 Inner: {ex.InnerException.Message}");
+                    Console.WriteLine($" Inner: {ex.InnerException.Message}");
             }
         }
 
@@ -69,7 +69,7 @@ namespace SocialMediaApp.Hubs
             var message = await _context.Messages.FindAsync(messageId);
             if (message == null)
             {
-                Console.WriteLine("⚠️ Message not found in DB.");
+                Console.WriteLine(" Message not found in DB.");
                 return;
             }
 

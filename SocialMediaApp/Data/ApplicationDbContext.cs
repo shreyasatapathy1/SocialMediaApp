@@ -16,6 +16,8 @@ namespace SocialMediaApp.Data
         public DbSet<FriendRequest> FriendRequests { get; set; }
         public DbSet<Message> Messages { get; set; }
 
+        public DbSet<Post> Posts { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

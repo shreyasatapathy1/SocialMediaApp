@@ -139,8 +139,8 @@
                 const selectedEmoji = e.target.innerText;
                 popup.style.display = "none";
 
-                console.log("👉 Emoji selected:", selectedEmoji);
-                console.log("🔗 Sending reaction for message ID:", selectedMessageId);
+                console.log(" Emoji selected:", selectedEmoji);
+                console.log(" Sending reaction for message ID:", selectedMessageId);
 
                 if (selectedMessageId) {
                     connection.invoke("AddReaction", parseInt(selectedMessageId), selectedEmoji)

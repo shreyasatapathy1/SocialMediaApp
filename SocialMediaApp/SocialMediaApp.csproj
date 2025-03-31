@@ -24,7 +24,6 @@
   <ItemGroup>
     <Folder Include="Controllers\" />
     <Folder Include="wwwroot\images\profilepics\" />
-    <Folder Include="wwwroot\uploads\" />
   </ItemGroup>
 
 </Project>

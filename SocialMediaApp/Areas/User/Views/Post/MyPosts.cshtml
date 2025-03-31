@@ -1,0 +1,44 @@
+﻿@model List<SocialMediaApp.Models.Post>
+
+@{
+    ViewData["Title"] = "My Posts";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <h3>My Posts</h3>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @foreach (var post in Model)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(post.TextContent))
+                {
+                    <p class="card-text">@post.TextContent</p>
+                }
+
+                @if (!string.IsNullOrEmpty(post.MediaUrl))
+                {
+                    if (post.MediaType == "image")
+                    {
+                        <img src="@post.MediaUrl" class="img-fluid" />
+                    }
+                    else if (post.MediaType == "video")
+                    {
+                        <video controls width="100%">
+                            <source src="@post.MediaUrl" type="video/mp4" />
+                            Your browser does not support the video tag.
+                        </video>
+                    }
+                }
+
+                <p class="text-muted mt-2"><small>Posted on @post.PostedAt.ToString("g")</small></p>
+            </div>
+        </div>
+    }
+</div>

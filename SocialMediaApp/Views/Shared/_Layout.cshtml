@@ -28,6 +28,13 @@
                             <a class="nav-link text-dark" asp-area="User" asp-controller="Friend" asp-action="MyFriends">My Friends</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link text-dark fw-bold fs-4" asp-area="User" asp-controller="Post" asp-action="Create" title="Create Post">+</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="User" asp-controller="Post" asp-action="MyPosts">My Posts</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="User" asp-controller="Chat" asp-action="ChatList">
                                 <i class="bi bi-chat-dots"></i> Chat
                             </a>
@@ -53,7 +60,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2025 - SocialMediaApp - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2025 - SocialMediaApp 
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

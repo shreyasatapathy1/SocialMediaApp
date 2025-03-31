@@ -9,22 +9,35 @@
 
 <div class="container mt-5">
     <h4 class="mb-4">Chat with @Model.FriendUserName</h4>
-    @* <p>Debug ReceiverId: @Model.FriendUserId</p> *@
 
-    <!-- Hidden fields -->
     <input type="hidden" id="senderId" value="@currentUserId" />
     <input type="hidden" id="receiverId" value="@Model.FriendUserId" />
 
     <div class="border rounded p-3 mb-3" id="chat-box" style="height: 400px; overflow-y: auto;">
         @foreach (var msg in Model.Messages)
         {
-            <div class="mb-2 text-@(msg.IsSentByCurrentUser ? "end" : "start")">
+            <div class="mb-2 text-@(msg.IsSentByCurrentUser ? "end" : "start")" data-message-id="@msg.Id">
                 <span class="badge bg-@(msg.IsSentByCurrentUser ? "primary" : "secondary")">
                     @msg.Content
                 </span>
-                <small class="d-block text-muted">@msg.SentAt.ToString("hh:mm tt")</small>
+                <small class="d-block text-muted">
+                    @msg.SentAt.ToString("hh:mm tt")
+                    @if (!string.IsNullOrEmpty(msg.Reaction))
+                    {
+                        <span class="ms-2 reaction-emoji">@msg.Reaction</span>
+                    }
+                    <button class="btn btn-sm btn-link text-muted react-btn" data-message-id="@msg.Id" title="React">😃</button>
+                </small>
             </div>
         }
+    </div>
+
+    <!-- Emoji popup (outside loop!) -->
+    <div id="emojiPopup" style="position: absolute; display: none; z-index: 999;">
+        <span class="emoji-option">👍</span>
+        <span class="emoji-option">❤️</span>
+        <span class="emoji-option">😂</span>
+        <span class="emoji-option">🔥</span>
     </div>
 
     <div class="d-flex">
@@ -45,17 +58,16 @@
             const senderId = document.getElementById("senderId").value;
             const receiverId = document.getElementById("receiverId").value;
 
-            console.log("📌 SenderId:", senderId);
-            console.log("📌 ReceiverId:", receiverId);
+            let selectedMessageId = null;
 
             connection.start().then(() => {
-                console.log("✅ SignalR connected.");
+                console.log("SignalR connected.");
             }).catch(err => {
-                console.error("❌ SignalR connection failed:", err);
+                console.error("SignalR connection failed:", err);
             });
 
-            // Incoming message handler
-            connection.on("ReceiveMessage", function (fromUserId, message) {
+            // Receive messages
+            connection.on("ReceiveMessage", function (fromUserId, message, messageId) {
                 const isMe = fromUserId === senderId;
                 const alignment = isMe ? "end" : "start";
                 const badgeClass = isMe ? "primary" : "secondary";
@@ -63,10 +75,34 @@
                 const chatBox = document.getElementById("chat-box");
                 const div = document.createElement("div");
                 div.className = `mb-2 text-${alignment}`;
-                div.innerHTML = `<span class="badge bg-${badgeClass}">${message}</span>`;
+                div.setAttribute("data-message-id", messageId);
+                div.innerHTML = `
+                    <span class="badge bg-${badgeClass}">${message}</span>
+                    <small class="d-block text-muted">
+                        Just now
+                        <button class="btn btn-sm btn-link text-muted react-btn" data-message-id="${messageId}" title="React">😃</button>
+                    </small>
+                `;
                 chatBox.appendChild(div);
                 chatBox.scrollTop = chatBox.scrollHeight;
             });
+
+            // Receive reaction
+                    connection.on("ReceiveReaction", function (messageId, emoji) {
+            const messageDiv = document.querySelector(`[data-message-id='${messageId}']`);
+            if (messageDiv) {
+                const timeElement = messageDiv.querySelector("small");
+
+                const existingEmoji = timeElement.querySelector(".reaction-emoji");
+                if (existingEmoji) existingEmoji.remove();
+
+                const emojiSpan = document.createElement("span");
+                emojiSpan.className = "ms-2 reaction-emoji";
+                emojiSpan.textContent = emoji;
+                timeElement.appendChild(emojiSpan);
+            }
+        });
+
 
             // Send message
             document.getElementById("sendBtn").addEventListener("click", async function () {
@@ -83,14 +119,62 @@
                 }
             });
 
-            // Send on Enter key
+            // Send message on Enter
             document.getElementById("messageInput").addEventListener("keypress", function (e) {
                 if (e.key === "Enter") {
                     document.getElementById("sendBtn").click();
                 }
             });
+
+            // Reaction popup logic
+                    document.addEventListener("click", function (e) {
+            const popup = document.getElementById("emojiPopup");
+
+            if (e.target.classList.contains("react-btn")) {
+                selectedMessageId = e.target.getAttribute("data-message-id");
+                popup.style.left = e.pageX + "px";
+                popup.style.top = e.pageY + "px";
+                popup.style.display = "block";
+            } else if (e.target.classList.contains("emoji-option")) {
+                const selectedEmoji = e.target.innerText;
+                popup.style.display = "none";
+
+                console.log("👉 Emoji selected:", selectedEmoji);
+                console.log("🔗 Sending reaction for message ID:", selectedMessageId);
+
+                if (selectedMessageId) {
+                    connection.invoke("AddReaction", parseInt(selectedMessageId), selectedEmoji)
+                        .then(() => console.log(" Reaction sent to server"))
+                        .catch(err => console.error("Error sending reaction:", err));
+                }
+            } else {
+                popup.style.display = "none";
+            }
+        });
+
         });
     </script>
+
+    <style>
+        #emojiPopup {
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 6px 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+
+        .emoji-option {
+            font-size: 1.5rem;
+            padding: 5px;
+            cursor: pointer;
+        }
+
+            .emoji-option:hover {
+                background-color: #f0f0f0;
+                border-radius: 5px;
+            }
+    </style>
+
 }
-
-

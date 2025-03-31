@@ -49,8 +49,10 @@ namespace SocialMediaApp.Hubs
                 _context.Messages.Add(message);
                 await _context.SaveChangesAsync(); // 💥 This line throws FK error if IDs mismatch
 
-                await Clients.User(receiverId).SendAsync("ReceiveMessage", senderId, content);
-                await Clients.User(senderId).SendAsync("ReceiveMessage", senderId, content);
+                await Clients.User(receiverId).SendAsync("ReceiveMessage", senderId, content, message.Id);
+                await Clients.User(senderId).SendAsync("ReceiveMessage", senderId, content, message.Id);
+
+
             }
             catch (Exception ex)
             {
@@ -59,6 +61,27 @@ namespace SocialMediaApp.Hubs
                     Console.WriteLine($"🔎 Inner: {ex.InnerException.Message}");
             }
         }
+
+        public async Task AddReaction(int messageId, string emoji)
+        {
+            Console.WriteLine($"AddReaction called for MessageID={messageId} with Emoji={emoji}");
+
+            var message = await _context.Messages.FindAsync(messageId);
+            if (message == null)
+            {
+                Console.WriteLine("⚠️ Message not found in DB.");
+                return;
+            }
+
+            message.Reaction = emoji;
+            await _context.SaveChangesAsync();
+
+            Console.WriteLine(" Reaction saved to DB.");
+
+            await Clients.User(message.SenderId).SendAsync("ReceiveReaction", messageId, emoji);
+            await Clients.User(message.ReceiverId).SendAsync("ReceiveReaction", messageId, emoji);
+        }
+
 
 
 
